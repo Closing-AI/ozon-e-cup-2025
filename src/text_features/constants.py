@@ -2,10 +2,11 @@
 # Shared constants for regex patterns and word lists.
 
 import re
-import os
-from pathlib import Path
 import nltk
+from pathlib import Path
+from functools import wraps
 from nltk.corpus import stopwords
+import time
 
 # --- Word lists ---
 MESSENGERS = [
@@ -90,3 +91,14 @@ def load_stopwords() -> set:
         return set()
 
 STOP_WORDS = load_stopwords()
+
+
+def timing(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} executed in {end_time - start_time:.4f} seconds")
+        return result
+    return wrapper

@@ -3,13 +3,16 @@
 
 import re
 import pandas as pd
+import logging
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import Dict, Union, Tuple, Optional, List
 from .constants import (
     URL_PATTERN, PHONE_PATTERN, SKU_PATTERN, PRICE_PATTERN, EMOJI_PATTERN,
-    MESSENGERS, SUSPICIOUS_WORDS, BRANDS, URGENCY_WORDS
+    MESSENGERS, SUSPICIOUS_WORDS, BRANDS, URGENCY_WORDS, timing
 )
 from .cleaning import create_basic_cleaned_text, create_semantic_cleaned_text
+
+
 
 # --- Basic feature functions ---
 def count_capslock_words(text: str) -> int:
@@ -177,6 +180,7 @@ def extract_semantic_features(text: str) -> Dict[str, Union[int, float]]:
     
     return {name: func(text) for name, func in SEMANTIC_FEATURE_FUNCTIONS.items()}
 
+@timing
 # --- Feature creation functions ---
 def create_basic_text_features(text_series: pd.Series) -> pd.DataFrame:
     """
@@ -192,6 +196,7 @@ def create_basic_text_features(text_series: pd.Series) -> pd.DataFrame:
     features_df.index = text_series.index
     return features_df
 
+@timing
 def create_semantic_features(text_series: pd.Series) -> pd.DataFrame:
     """
     Create a DataFrame of semantic text features from a Series of pre-cleaned texts.
@@ -206,6 +211,7 @@ def create_semantic_features(text_series: pd.Series) -> pd.DataFrame:
     features_df.index = text_series.index
     return features_df
 
+@timing
 def create_tfidf_features(
     texts_char: pd.Series,
     texts_word: pd.Series,
@@ -271,6 +277,7 @@ def create_tfidf_features(
 
     return tfidf_char_df, tfidf_word_df, tfidf_char_vectorizer, tfidf_word_vectorizer
 
+@timing
 def create_flags_features(df: pd.DataFrame, flag_columns: Optional[List[str]] = None) -> pd.DataFrame:
     """
     Create binary flag features indicating None/NaN values for specified columns.
@@ -296,6 +303,7 @@ def create_flags_features(df: pd.DataFrame, flag_columns: Optional[List[str]] = 
     
     return none_flags
 
+@timing
 def create_all_text_features(
     df: pd.DataFrame,
     mode: str = 'train',
@@ -360,6 +368,7 @@ def create_all_text_features(
         word_ngram_range=word_ngram_range
     )
 
+    logging.info()
     # Concatenate all features
     all_features_df = pd.concat(
         [none_flags, basic_text_features, semantic_text_features, tfidf_char_df, tfidf_word_df],

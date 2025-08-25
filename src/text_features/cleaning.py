@@ -11,7 +11,7 @@ from functools import lru_cache
 from typing import List
 from .constants import (
     INVISIBLE_RE, CONTROL_RE, TAG_RE, WS_RE, URL_PATTERN,
-    COMBINED_PATTERN, STOP_WORDS
+    COMBINED_PATTERN, STOP_WORDS, timing
 )
 
 # Initialize pymorphy3 analyzer
@@ -90,6 +90,7 @@ def basic_clean_text(text: str) -> str:
         result = func(result)
     return result
 
+@timing
 def create_basic_cleaned_text(text_series: pd.Series) -> pd.Series:
     """
     Apply basic cleaning to a pandas Series of texts.
@@ -183,6 +184,8 @@ VECTORIZED_CLEANING_FUNCTIONS = {
     "collapse_whitespace": collapse_whitespace_semantic,
 }
 
+
+@timing
 # --- Main semantic cleaner ---
 def create_semantic_cleaned_text(text_series: pd.Series) -> pd.Series:
     """
