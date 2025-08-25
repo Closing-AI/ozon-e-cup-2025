@@ -368,7 +368,6 @@ def create_all_text_features(
         word_ngram_range=word_ngram_range
     )
 
-    logging.info()
     # Concatenate all features
     all_features_df = pd.concat(
         [none_flags, basic_text_features, semantic_text_features, tfidf_char_df, tfidf_word_df],
