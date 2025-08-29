@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
+import sklearn
 from category_encoders import BinaryEncoder
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, normalize
+
+sklearn.set_config(enable_metadata_routing=True)
 
 
 class NumericEncoder(TransformerMixin, BaseEstimator):
@@ -13,7 +16,7 @@ class NumericEncoder(TransformerMixin, BaseEstimator):
     - Apply np.log1p if required
     - Apply StandardScaler
     - Fill missing values
-    - Optionally, can random set values to a specific proportion of data
+    - Optionally, can random set values to a specific proportion of data (only if is_train=True)
 
     Args:
         col_name (str): The name of the column to encode.
@@ -50,7 +53,7 @@ class NumericEncoder(TransformerMixin, BaseEstimator):
 
         return self
 
-    def transform(self, X: pd.DataFrame, y=None):
+    def transform(self, X: pd.DataFrame, y=None, is_train: bool = False):
         X = X.copy()
 
         if self.apply_log:
@@ -59,7 +62,7 @@ class NumericEncoder(TransformerMixin, BaseEstimator):
         X[[self.col_name]] = self._scaler.transform(X[[self.col_name]])
         X[[self.col_name]] = X[[self.col_name]].fillna(self.filling_value)
 
-        if self.random_sample_proportion > 0:
+        if is_train and self.random_sample_proportion > 0:
             np.random.seed(self.random_state)
             random_mask = np.random.rand(len(X)) < self.random_sample_proportion
             X.loc[random_mask, self.col_name] = self.filling_value
@@ -142,43 +145,126 @@ CATEGORIAL_PREP_PIPELINE = Pipeline(
 
 NUMERIC_PREP_PIPELINE = Pipeline(
     [
-        ("rating_1_count", NumericEncoder("rating_1_count", apply_log=True)),
-        ("rating_2_count", NumericEncoder("rating_2_count", apply_log=True)),
-        ("rating_3_count", NumericEncoder("rating_3_count", apply_log=True)),
-        ("rating_4_count", NumericEncoder("rating_4_count", apply_log=True)),
-        ("rating_5_count", NumericEncoder("rating_5_count", apply_log=True)),
-        ("comments_published_count", NumericEncoder("comments_published_count", apply_log=True)),
-        ("photos_published_count", NumericEncoder("photos_published_count", apply_log=True)),
-        ("videos_published_count", NumericEncoder("videos_published_count", apply_log=True)),
-        ("PriceDiscounted", NumericEncoder("PriceDiscounted", apply_log=False, random_sample_proportion=0.0005)),
-        ("item_time_alive", NumericEncoder("item_time_alive", apply_log=True)),
-        ("item_count_fake_returns7", NumericEncoder("item_count_fake_returns7", apply_log=False)),
-        ("item_count_fake_returns30", NumericEncoder("item_count_fake_returns30", apply_log=False)),
-        ("item_count_fake_returns90", NumericEncoder("item_count_fake_returns90", apply_log=False)),
-        ("item_count_sales7", NumericEncoder("item_count_sales7", apply_log=True)),
-        ("item_count_sales30", NumericEncoder("item_count_sales30", apply_log=True)),
-        ("item_count_sales90", NumericEncoder("item_count_sales90", apply_log=True)),
-        ("item_count_returns7", NumericEncoder("item_count_returns7", apply_log=False)),
-        ("item_count_returns30", NumericEncoder("item_count_returns30", apply_log=False)),
-        ("item_count_returns90", NumericEncoder("item_count_returns90", apply_log=False)),
-        ("GmvTotal7", NumericEncoder("GmvTotal7", apply_log=False)),
-        ("GmvTotal30", NumericEncoder("GmvTotal30", apply_log=False)),
-        ("GmvTotal90", NumericEncoder("GmvTotal90", apply_log=False)),
-        ("ExemplarAcceptedCountTotal7", NumericEncoder("ExemplarAcceptedCountTotal7", apply_log=True)),
-        ("ExemplarAcceptedCountTotal30", NumericEncoder("ExemplarAcceptedCountTotal30", apply_log=True)),
-        ("ExemplarAcceptedCountTotal90", NumericEncoder("ExemplarAcceptedCountTotal90", apply_log=True)),
-        ("OrderAcceptedCountTotal7", NumericEncoder("OrderAcceptedCountTotal7", apply_log=True)),
-        ("OrderAcceptedCountTotal30", NumericEncoder("OrderAcceptedCountTotal30", apply_log=True)),
-        ("OrderAcceptedCountTotal90", NumericEncoder("OrderAcceptedCountTotal90", apply_log=True)),
-        ("ExemplarReturnedCountTotal7", NumericEncoder("ExemplarReturnedCountTotal7", apply_log=True)),
-        ("ExemplarReturnedCountTotal30", NumericEncoder("ExemplarReturnedCountTotal30", apply_log=True)),
-        ("ExemplarReturnedCountTotal90", NumericEncoder("ExemplarReturnedCountTotal90", apply_log=True)),
-        ("ExemplarReturnedValueTotal7", NumericEncoder("ExemplarReturnedValueTotal7", apply_log=False)),
-        ("ExemplarReturnedValueTotal30", NumericEncoder("ExemplarReturnedValueTotal30", apply_log=False)),
-        ("ExemplarReturnedValueTotal90", NumericEncoder("ExemplarReturnedValueTotal90", apply_log=False)),
-        ("ItemVarietyCount", NumericEncoder("ItemVarietyCount", apply_log=True)),
-        ("ItemAvailableCount", NumericEncoder("ItemAvailableCount", apply_log=True)),
-        ("seller_time_alive", NumericEncoder("seller_time_alive", apply_log=True)),
+        ("rating_1_count", NumericEncoder("rating_1_count", apply_log=True).set_transform_request(is_train=True)),
+        ("rating_2_count", NumericEncoder("rating_2_count", apply_log=True).set_transform_request(is_train=True)),
+        ("rating_3_count", NumericEncoder("rating_3_count", apply_log=True).set_transform_request(is_train=True)),
+        ("rating_4_count", NumericEncoder("rating_4_count", apply_log=True).set_transform_request(is_train=True)),
+        ("rating_5_count", NumericEncoder("rating_5_count", apply_log=True).set_transform_request(is_train=True)),
+        (
+            "comments_published_count",
+            NumericEncoder("comments_published_count", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "photos_published_count",
+            NumericEncoder("photos_published_count", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "videos_published_count",
+            NumericEncoder("videos_published_count", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "PriceDiscounted",
+            NumericEncoder("PriceDiscounted", apply_log=False, random_sample_proportion=0.0005).set_transform_request(
+                is_train=True
+            ),
+        ),
+        ("item_time_alive", NumericEncoder("item_time_alive", apply_log=True).set_transform_request(is_train=True)),
+        (
+            "item_count_fake_returns7",
+            NumericEncoder("item_count_fake_returns7", apply_log=False).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_fake_returns30",
+            NumericEncoder("item_count_fake_returns30", apply_log=False).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_fake_returns90",
+            NumericEncoder("item_count_fake_returns90", apply_log=False).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_sales7",
+            NumericEncoder("item_count_sales7", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_sales30",
+            NumericEncoder("item_count_sales30", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_sales90",
+            NumericEncoder("item_count_sales90", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_returns7",
+            NumericEncoder("item_count_returns7", apply_log=False).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_returns30",
+            NumericEncoder("item_count_returns30", apply_log=False).set_transform_request(is_train=True),
+        ),
+        (
+            "item_count_returns90",
+            NumericEncoder("item_count_returns90", apply_log=False).set_transform_request(is_train=True),
+        ),
+        ("GmvTotal7", NumericEncoder("GmvTotal7", apply_log=False).set_transform_request(is_train=True)),
+        ("GmvTotal30", NumericEncoder("GmvTotal30", apply_log=False).set_transform_request(is_train=True)),
+        ("GmvTotal90", NumericEncoder("GmvTotal90", apply_log=False).set_transform_request(is_train=True)),
+        (
+            "ExemplarAcceptedCountTotal7",
+            NumericEncoder("ExemplarAcceptedCountTotal7", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarAcceptedCountTotal30",
+            NumericEncoder("ExemplarAcceptedCountTotal30", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarAcceptedCountTotal90",
+            NumericEncoder("ExemplarAcceptedCountTotal90", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "OrderAcceptedCountTotal7",
+            NumericEncoder("OrderAcceptedCountTotal7", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "OrderAcceptedCountTotal30",
+            NumericEncoder("OrderAcceptedCountTotal30", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "OrderAcceptedCountTotal90",
+            NumericEncoder("OrderAcceptedCountTotal90", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarReturnedCountTotal7",
+            NumericEncoder("ExemplarReturnedCountTotal7", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarReturnedCountTotal30",
+            NumericEncoder("ExemplarReturnedCountTotal30", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarReturnedCountTotal90",
+            NumericEncoder("ExemplarReturnedCountTotal90", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarReturnedValueTotal7",
+            NumericEncoder("ExemplarReturnedValueTotal7", apply_log=False).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarReturnedValueTotal30",
+            NumericEncoder("ExemplarReturnedValueTotal30", apply_log=False).set_transform_request(is_train=True),
+        ),
+        (
+            "ExemplarReturnedValueTotal90",
+            NumericEncoder("ExemplarReturnedValueTotal90", apply_log=False).set_transform_request(is_train=True),
+        ),
+        ("ItemVarietyCount", NumericEncoder("ItemVarietyCount", apply_log=True).set_transform_request(is_train=True)),
+        (
+            "ItemAvailableCount",
+            NumericEncoder("ItemAvailableCount", apply_log=True).set_transform_request(is_train=True),
+        ),
+        (
+            "seller_time_alive",
+            NumericEncoder("seller_time_alive", apply_log=True).set_transform_request(is_train=True),
+        ),
     ],
     verbose=True,
 )
