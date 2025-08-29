@@ -4,7 +4,7 @@ import sklearn
 from category_encoders import BinaryEncoder
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, normalize
+from sklearn.preprocessing import StandardScaler
 
 sklearn.set_config(enable_metadata_routing=True)
 
@@ -105,11 +105,9 @@ class CategoryEncoder(TransformerMixin, BaseEstimator):
         Memorize the most frequent categories and fits binary encoder.
         """
         X_one_col = X[[self.col_name]].copy()
-        series = X_one_col[self.col_name]
 
-        X_one_col[self.col_name] = self._random_assign_new_category(series)
+        X_one_col[self.col_name] = self._random_assign_new_category(X_one_col[self.col_name])
         self.categories_ = X_one_col[self.col_name].unique().tolist()
-
         self._encoder = self._encoder.fit(X_one_col)
 
         return self
