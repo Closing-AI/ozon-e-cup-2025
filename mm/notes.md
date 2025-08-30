@@ -1,4 +1,8 @@
-# multimodal
+# Multi-modal fusion
+
+1. Project all modality vectors in one dimension.
+
+---
 
 сценарии:
 
@@ -13,7 +17,7 @@
   - LayerNorm + concat + att + mlp
   - LayerNorm + concat + att + boosting (тут вначале учим модель выше, потом убираем mlp и делаем бустинг)
 
-- modality gating + attention (с этим предлагаю пока повременить)
+- modality gating + attention
 
 использовать:
 
