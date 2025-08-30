@@ -112,13 +112,15 @@ class CategoryEncoder(TransformerMixin, BaseEstimator):
 
         return self
 
-    def transform(self, X: pd.DataFrame, y=None):
+    def transform(self, X: pd.DataFrame, y=None, is_val: bool = False):
         """
         Applies Binary Encoding to the column.
         """
         X = X.copy()
-        if hasattr(self, "categories_"):
-            X[self.col_name] = X[self.col_name].where(X[self.col_name].isin(self.categories_), self._new_cat_name)
+        X[self.col_name] = X[self.col_name].where(X[self.col_name].isin(self.categories_), self._new_cat_name)
+
+        if is_val:
+            X[self.col_name] = self._random_assign_new_category(X[self.col_name])
 
         return pd.merge(
             X.drop(columns=[self.col_name]),
@@ -130,12 +132,24 @@ class CategoryEncoder(TransformerMixin, BaseEstimator):
 
 CATEGORIAL_PREP_PIPELINE = Pipeline(
     [
-        ("brand_name", CategoryEncoder("brand_name", random_state=42, random_sample_proportion=0.05)),
+        (
+            "brand_name",
+            CategoryEncoder("brand_name", random_state=42, random_sample_proportion=0.05).set_transform_request(
+                is_val=True
+            ),
+        ),
         (
             "CommercialTypeName4",
-            CategoryEncoder(col_name="CommercialTypeName4", random_state=42, random_sample_proportion=0.001),
+            CategoryEncoder(
+                col_name="CommercialTypeName4", random_state=42, random_sample_proportion=0.001
+            ).set_transform_request(is_val=True),
         ),
-        ("SellerID", CategoryEncoder(col_name="SellerID", random_state=42, random_sample_proportion=0.25)),
+        (
+            "SellerID",
+            CategoryEncoder(col_name="SellerID", random_state=42, random_sample_proportion=0.25).set_transform_request(
+                is_val=True
+            ),
+        ),
     ],
     verbose=True,
 )
