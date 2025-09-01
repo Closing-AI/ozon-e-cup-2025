@@ -1,6 +1,8 @@
 # Multi-modal fusion
 
 1. Project all modality vectors in one dimension.
+2.1. Concatenate -> MLP.
+2.2. Attention-based fusion.
 
 ---
 
